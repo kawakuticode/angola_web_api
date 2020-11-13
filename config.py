@@ -6,8 +6,6 @@ DEV_DATABASE_URI = 'postgres://kawakuticode@localhost:5432/angola_web'
 
 class Config:
     """Base config."""
-    # SECRET_KEY = environ.get('SECRET_KEY')
-    # SESSION_COOKIE_NAME = environ.get('SESSION_COOKIE_NAME')
     SECRET_KEY = os.urandom(32)
     STATIC_FOLDER = 'static'
     TEMPLATES_FOLDER = 'templates'
