@@ -20,9 +20,7 @@ def create_app():
         # Include our Routes
         from .services import routes
         from .models import radio_station
-
-
-        db.drop_all()
+        #db.drop_all()
         db.create_all()  # Create sql tables for our data models
 
         # print(db.session)
