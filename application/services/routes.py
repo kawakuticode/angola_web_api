@@ -14,8 +14,7 @@ rs_schema = RadioSchema(many=True)
 @app.before_first_request
 def before_first_request_func():
     radios_list = R_uti.get_radio_data_by_soup(_URL)
-    print(radios_list)
-    if radios_list != 0:
+    if radios_list != 0 and len(Radio.query.all()) == 0:
         db.session.add_all(radios_list)
         db.session.commit()
     else:
