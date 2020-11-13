@@ -1,6 +1,6 @@
 import os
-DATABASE_URI = 'postgres://wsteasfakevqhq:3cae8bc967753884fde1db46469c5736064a47813a9923327126e60668d11aa2@ec2-54-247-94-127.eu-west-1.compute.amazonaws.com:5432/d13tl0r9i43etv'
-PROD_DATABASE_URI = 'postgres://wsteasfakevqhq:3cae8bc967753884fde1db46469c5736064a47813a9923327126e60668d11aa2@ec2-54-247-94-127.eu-west-1.compute.amazonaws.com:5432/d13tl0r9i43etv'
+DATABASE_URI = 'postgres://idmeieufmbqydw:ea6f51abb4056d53c5c908f8fc5b302e32aeca6b0dc2a56cc1f9c706b20ddaab@ec2-54-247-94-127.eu-west-1.compute.amazonaws.com:5432/df6346qe2d6qjf'
+PROD_DATABASE_URI = 'postgres://idmeieufmbqydw:ea6f51abb4056d53c5c908f8fc5b302e32aeca6b0dc2a56cc1f9c706b20ddaab@ec2-54-247-94-127.eu-west-1.compute.amazonaws.com:5432/df6346qe2d6qjf'
 DEV_DATABASE_URI = 'postgres://kawakuticode@localhost:5432/angola_web'
 
 
