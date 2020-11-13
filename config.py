@@ -1,8 +1,8 @@
 "in future will use env variables for config"
 
-DATABASE_URI = 'sqlite:///data\RADIOS.db'
-PROD_DATABASE_URI = 'sqlite:///data\RADIOS_PROD.db'
-DEV_DATABASE_URI = 'postgres://kawakuticode@localhost:5432/radios_ao'
+DATABASE_URI = 'postgres://kawakuticode@localhost:5432/angola_web'
+PROD_DATABASE_URI = 'postgres://kawakuticode@localhost:5432/angola_web'
+DEV_DATABASE_URI = 'postgres://kawakuticode@localhost:5432/angola_web'
 
 
 class Config:
