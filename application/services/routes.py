@@ -19,7 +19,7 @@ def before_first_request_func():
         db.session.add_all(radios_list)
         db.session.commit()
     else:
-        print("radio list empty!!")
+        print("no need to update!!")
 
 
 @app.route("/", methods=["GET"])
@@ -27,7 +27,7 @@ def before_first_request_func():
 @app.route("/index", methods=["GET"])
 
 def home():
-    return "welcome to radio ao api!"
+    return "welcome to angola web api!"
 
 
 @app.route("/api/v1/radios", methods=["GET"])
