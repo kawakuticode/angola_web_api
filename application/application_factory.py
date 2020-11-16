@@ -11,7 +11,7 @@ def create_app():
     """Initialize the core application."""
     app = Flask(__name__, instance_relative_config=False)
     #app = Flask(__name__)
-    app.config.from_object('config.ProdConfig')
+    app.config.from_object('config.DevConfig')
 
     db.init_app(app)
     ma.init_app(app)
@@ -20,6 +20,8 @@ def create_app():
         # Include our Routes
         from .services import routes
         from .models import radio_station
+        from .models import weather
+
         #db.drop_all()
         db.create_all()  # Create sql tables for our data models
 

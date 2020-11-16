@@ -1,5 +1,4 @@
 from urllib.parse import urljoin
-
 import requests
 from bs4 import BeautifulSoup
 from requests import HTTPError
@@ -8,7 +7,6 @@ from application.models.radio_station import Radio
 
 
 class RadioUtilities(object):
-
     @classmethod
     def get_radio_name(self, radio_item):
         radio_name = ''
@@ -67,22 +65,36 @@ class RadioUtilities(object):
         try:
             page = requests.get(url)
             if page.status_code == 200:
-
                 soup = BeautifulSoup(page.content, "html.parser")
                 list_radios = soup.find_all(id="radios-list")
                 radio_items = [li for ul in list_radios for li in ul.findAll('li')]
-
                 if len(list_radios) > 0 and len(radio_items) > 0:
                     for radio in radio_items:
-                        name =self.get_radio_name(radio)
+                        r_name =self.get_radio_name(radio)
                         img_src = self.get_radio_img(radio)
                         params = self.get_radio_url(radio)
                         url_radio = self.built_radio_url(url, params)
                         stream_link = self.get_radio_stream_url(url_radio)
-                        radio_list.append(Radio(name, url_radio, stream_link, img_src))
+                        radio_list.append(Radio(r_name, url_radio, stream_link, img_src))
                 else:
                     print(f"radio list not found")
         except HTTPError:
             print(f"get radio data error. code : {page.status_code}, {HTTPError}")
         finally:
             return radio_list
+
+    @classmethod
+    def add_or_update_radio_db (self, radio_list, db ) :
+        radio_list_db = Radio.query.all()
+        if (len(radio_list) != 0) and (len(radio_list_db) == 0):
+            db.session.add_all(radio_list)
+            db.session.commit()
+        elif (radio_list != 0) and (len(radio_list_db) != 0) :
+            for radio_ in radio_list :
+                db.session.query(Radio).filter(Radio.r_name == radio_.r_name).update({'r_name':radio_.r_name,
+                                                                                      'url':radio_.url,
+                                                                                      'stream_link':radio_.stream_link,
+                                                                                      'img_logo':radio_.img_logo})
+                db.session.commit()
+        else:
+            print (f"size of radio list from scrap {radio_list}. No need to update !!")
