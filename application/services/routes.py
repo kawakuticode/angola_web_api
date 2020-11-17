@@ -26,6 +26,7 @@ wdays_schema = WeatherDaySchema(many=True)
 
 @app.before_first_request
 def before_first_request_func():
+    print("print called before first request")
     radio_list = R_uti.get_radio_data_by_soup(_URL)
     weather_now_list = W_uti.get_weather_now(URL_WEATHER)
     R_uti.add_or_update_radio_db (radio_list , db)

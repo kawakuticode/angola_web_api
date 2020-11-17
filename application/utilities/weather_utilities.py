@@ -88,19 +88,20 @@ class WeatherUtilities(object):
             db.session.add_all(weather_list)
             db.session.commit()
         elif (weather_list != 0) and (len(weather_db) != 0):
-                for weather in weather_list:
+                for weather in weather_db:
                     if self.check_date(weather.time_of_day):
                         print("="*3,">" , weather.city_name)
                         print("=" * 3, ">", weather.time_of_day)
                         print("=" * 40)
+                        weather_city = self.get_weather_city(weather.city_name , weather_list)[0]
                         db.session.query(WeatherNow).filter(WeatherNow.city_name ==
-                                                            weather.city_name)\
-                                                            .update({'time_of_day': weather.time_of_day,
-                                                             'temperature': weather.temperature,
-                                                             'description': weather.description,
-                                                             'preciptation': weather.preciptation,
-                                                             'humidity': weather.humidity,
-                                                             'wind': weather.wind})
+                                                            weather_city.city_name)\
+                                                            .update({'time_of_day': weather_city.time_of_day,
+                                                             'temperature': weather_city.temperature,
+                                                             'description': weather_city.description,
+                                                             'preciptation': weather_city.preciptation,
+                                                             'humidity': weather_city.humidity,
+                                                             'wind': weather_city.wind})
                         db.session.commit()
         else:
             print(f"size of weather list from scrap {weather_list}. No need to update !!")
@@ -109,6 +110,7 @@ class WeatherUtilities(object):
     def check_date (self , date_db):
 
         time_now = datetime.now()
+
         date_to_check = date_db.split()
         day_of_week_db = date_to_check[0]
         time_hrs_minutes = date_to_check[1].split(':')
@@ -117,8 +119,9 @@ class WeatherUtilities(object):
         index_day = WEEK.index(day_of_week_db)
 
         temp_date = time_now.replace(day=index_day, hour=int(db_hour), minute=int(db_minute), second=0)
-        #temp_date = time_now.replace(day=1, hour=2, minute=0, second=0)
-        diff_hours = (time_now - temp_date).seconds / 3600
+        #temp_date = time_now.replace(day=1, hour=3, minute=0, second=0)
+        diff_hours = ((time_now - temp_date).seconds) / 3600
+        print("\n", "diff", (diff_hours))
         if (diff_hours >= 1):
             return True
         else:
@@ -132,3 +135,7 @@ class WeatherUtilities(object):
         print('==' * 20)
         # Convert seconds to hours (there are 3600 seconds in an hour)
         print("\n", "diff", (diff_hours)) '''
+
+    @classmethod
+    def get_weather_city(self, name, weather_list):
+        return [city for city in weather_list if city.city_name == name]
