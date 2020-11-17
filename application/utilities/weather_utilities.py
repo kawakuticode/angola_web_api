@@ -10,7 +10,7 @@ URL_WEATHER = "https://www.google.com/search?lr=lang_en&ie=UTF-8&q=weather"
 ANGOLA_PROVINCES = ['Bengo', 'Benguela', 'Kuito', 'Cabinda', 'Menongue', "N'dalatando", 'Sumbe', 'Ondjiva',
                     'Huambo', 'Lubango', 'Luanda', 'Dundo', 'Saurimo', 'Malanje', 'Luena', 'Namibe', 'Uíge', 'Zaire']
 
-
+WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"
 LANGUAGE = "en-gb;q=0.8, en;q=0.7"
@@ -89,21 +89,46 @@ class WeatherUtilities(object):
             db.session.commit()
         elif (weather_list != 0) and (len(weather_db) != 0):
                 for weather in weather_list:
-                    named_tuple = time.localtime()  # get struct_time
-                    time_string = time.strftime("%A %H:%M", named_tuple)
-                    print("="*3,">" , weather.city_name)
-                    print("=" * 3, ">", weather.time_of_day)
-                    print("=" * 3, ">",datetime.now().time())
-                    #print("=" * 3, ">",time_string)
-                    print (datetime.strptime(time_string,
-                                      '%A %H:%M'))
-                    print("=" * 40)
-                    '''db.session.query(WeatherNow).filter(WeatherNow.city_name == weather.city_name).update({'time_of_day': weather.time_of_day,
-                                                                                                            'temperature': weather.temperature,
-                                                                                                            'description': weather.description,
-                                                                                                            'preciptation': weather.preciptation,
-                                                                                                            'humidity': weather.humidity,
-                                                                                                             'wind': weather.wind})
-                                        db.session.commit() '''
+                    if self.check_date(weather.time_of_day):
+                        print("="*3,">" , weather.city_name)
+                        print("=" * 3, ">", weather.time_of_day)
+                        print("=" * 40)
+                        db.session.query(WeatherNow).filter(WeatherNow.city_name ==
+                                                            weather.city_name)\
+                                                            .update({'time_of_day': weather.time_of_day,
+                                                             'temperature': weather.temperature,
+                                                             'description': weather.description,
+                                                             'preciptation': weather.preciptation,
+                                                             'humidity': weather.humidity,
+                                                             'wind': weather.wind})
+                        db.session.commit()
         else:
             print(f"size of weather list from scrap {weather_list}. No need to update !!")
+
+    @classmethod
+    def check_date (self , date_db):
+
+        time_now = datetime.now()
+        date_to_check = date_db.split()
+        day_of_week_db = date_to_check[0]
+        time_hrs_minutes = date_to_check[1].split(':')
+        db_hour = time_hrs_minutes[0]
+        db_minute = time_hrs_minutes[1]
+        index_day = WEEK.index(day_of_week_db)
+
+        temp_date = time_now.replace(day=index_day, hour=int(db_hour), minute=int(db_minute), second=0)
+        #temp_date = time_now.replace(day=1, hour=2, minute=0, second=0)
+        diff_hours = (time_now - temp_date).seconds / 3600
+        if (diff_hours >= 1):
+            return True
+        else:
+            return False
+
+        '''print('==' * 20)
+           print("\n", "Day of week:", WEEK[index_day],
+              "\n", "Hour:", temp_date.hour,
+              "\n", "Minute:", temp_date.minute,
+              "\n", "Second:", temp_date.second)
+        print('==' * 20)
+        # Convert seconds to hours (there are 3600 seconds in an hour)
+        print("\n", "diff", (diff_hours)) '''
