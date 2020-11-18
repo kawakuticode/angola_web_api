@@ -4,7 +4,7 @@ from flask import jsonify
 from application.models.radio_station import Radio
 from application.models.radio_station import RadioSchema
 from application.models.radio_station import db
-from application.models.weather import WeatherNow, WeatherDaySchema, WeatherNowSchema
+from application.models.weather import WeatherNow, WeatherNowSchema
 from application.utilities.weather_utilities import WeatherUtilities as W_uti
 
 URL_WEATHER = "https://www.google.com/search?lr=lang_en&ie=UTF-8&q=weather"
@@ -16,9 +16,6 @@ rs_schema = RadioSchema(many=True)
 
 wnow_schema = WeatherNowSchema()
 wnows_schema = WeatherNowSchema(many=True)
-wday_schema = WeatherDaySchema()
-wdays_schema = WeatherDaySchema(many=True)
-
 
 
 @app.before_first_request
