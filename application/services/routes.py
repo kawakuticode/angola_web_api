@@ -1,15 +1,12 @@
 from flask import current_app as app
 from flask import jsonify
 
-
 from application.models.radio_station import Radio
-from application.models.weather import WeatherNow , WeatherDay , WeatherDaySchema, WeatherNowSchema
 from application.models.radio_station import RadioSchema
 from application.models.radio_station import db
-from application.utilities.radio_utilities import RadioUtilities as R_uti
+from application.models.weather import WeatherNow, WeatherDaySchema, WeatherNowSchema
 from application.utilities.weather_utilities import WeatherUtilities as W_uti
 
-_URL = "http://radios.sapo.ao"
 URL_WEATHER = "https://www.google.com/search?lr=lang_en&ie=UTF-8&q=weather"
 ANGOLA_PROVINCES = ['Bengo', 'Benguela', 'Kuito', 'Cabinda', 'Menongue', "N'dalatando", 'Sumbe', 'Ondjiva',
                     'Huambo', 'Lubango', 'Luanda', 'Dundo', 'Saurimo', 'Malanje', 'Luena', 'Namibe', 'Uíge', 'Zaire']
@@ -27,11 +24,13 @@ wdays_schema = WeatherDaySchema(many=True)
 @app.before_first_request
 def before_first_request_func():
     print("print called before first request")
-    radio_list = R_uti.get_radio_data_by_soup(_URL)
-    weather_now_list = W_uti.get_weather_now(URL_WEATHER)
-    R_uti.add_or_update_radio_db (radio_list , db)
-    W_uti.add_update_weather_now_db(weather_now_list, db)
+    # if not R_uti.add_radio_db(db) :
+    #    print("updating radios....")
+    #    R_uti.update_radio_db(db)
 
+    if not W_uti.add_weather_now_db(db):
+        print("updating weather now....")
+        W_uti.update_weather_now_db(db)
 
 @app.route("/", methods=["GET"])
 @app.route("/home", methods=["GET"])
@@ -77,10 +76,10 @@ def weathernow():
 @app.route("/api/v1/weathernext", methods=["GET"])
 def weathernext():
     for region in ANGOLA_PROVINCES:
-        temp_url = URL_WEATHER+f"+{region}"
+        temp_url = URL_WEATHER + f"+{region}"
         soup = W_uti.get_weather_soup(temp_url)
         weather = W_uti.get_weather_next_days(soup)
         temp_url = ""
         print(weather)
-        return jsonify(), 200
 
+    return jsonify(), 200
