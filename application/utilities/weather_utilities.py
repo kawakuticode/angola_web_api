@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup as Bs
 from requests import HTTPError
 
-from application.models.weather import WeatherNow
+from application.models.weather import WeatherNow, WeatherDay
 
 URL_WEATHER = "https://www.google.com/search?lr=lang_en&ie=UTF-8&q=weather"
 ANGOLA_PROVINCES = ['Bengo', 'Benguela', 'Kuito', 'Cabinda', 'Menongue', "N'dalatando", 'Sumbe', 'Ondjiva',
@@ -43,6 +43,8 @@ class WeatherUtilities(object):
             for region in ANGOLA_PROVINCES:
                 temp_url = url + f"+{region}"
                 soup = cls.get_weather_soup(temp_url)
+                print(temp_url)
+                # print(soup.prettify())
                 result = dict()
                 # extract data
                 result['city_name'] = soup.find("div", attrs={"id": "wob_loc"}).text
@@ -52,10 +54,7 @@ class WeatherUtilities(object):
                 result['preciptation'] = soup.find("span", attrs={"id": "wob_pp"}).text
                 result['humidity'] = soup.find("span", attrs={"id": "wob_hm"}).text
                 result['wind'] = soup.find("span", attrs={"id": "wob_ws"}).text
-                # _weather = WeatherNow(result['city_name'], result['time_of_day'], result['temperature'],
-                #                      result['description'], result['preciptation'], result['humidity'], result['wind'])
 
-                # result = {}
                 next_days = []
                 days = soup.find("div", attrs={"id": "wob_dp"})
                 for day in days.findAll("div", attrs={"class": "wob_df"}):
@@ -68,77 +67,69 @@ class WeatherUtilities(object):
                     max_temp = temp[0].text
                     # minimum temparature in Celsius, use temp[3].text if you want fahrenheit
                     min_temp = temp[2].text
-                    next_days.append({f"day_of_week:{day_name}, description:{description}, max_temp:{max_temp}ºC,"
-                                      f" min_temp:{min_temp}ºC"})
-                    # append to result
-                    result['next_days'] = next_days
+
+                    n_day = WeatherDay(day_name, description, min_temp, max_temp)
+                    next_days.append(n_day)
+
+                    result['week_weather'] = next_days
 
                     _weather = WeatherNow(result['city_name'], result['time_of_day'], result['temperature'],
                                           result['description'], result['preciptation'], result['humidity'],
-                                          result['wind'], result['next_days'])
+                                          result['wind'], result['week_weather'])
 
                 data_weather.update({_weather.city_name: _weather})
-
+            #print (data_weather.values())
         except HTTPError:
-            print(f"get radio Http error. code : {HTTPError}")
+            print(f"get weather data Http error. code : {HTTPError}")
         except ConnectionError:
             print(f"get weather data now connection error. code : {ConnectionError}")
         finally:
             return data_weather
 
-    @classmethod
-    def get_weather_next_days(cls, soup):
-        result = {}
-        next_days = []
-        days = soup.find("div", attrs={"id": "wob_dp"})
-        for day in days.findAll("div", attrs={"class": "wob_df"}):
-            # extract the name of the day
-            day_name = day.find("div", attrs={"class": "QrNVmd Z1VzSb"}).attrs['aria-label']
-            # get weather status for that day
-            description = day.find("img").attrs["alt"]
-            temp = day.findAll("span", {"class": "wob_t"})
-            # maximum temparature in Celsius, use temp[1].text if you want fahrenheit
-            max_temp = temp[0].text
-            # minimum temparature in Celsius, use temp[3].text if you want fahrenheit
-            min_temp = temp[2].text
-            next_days.append({f"day_of_week:{day_name}, description:{description}, max_temp:{max_temp}ºC,"
-                              f" min_temp:{min_temp}ºC"})
-            # append to result
-            result['next_days'] = next_days
-        return result
 
     @classmethod
     def add_weather_now_db(cls, db):
+
         weather_db = WeatherNow.query.all()
         weather_dict = cls.get_weather_now(URL_WEATHER)
         weather_list = list(weather_dict.values())
 
         if (weather_list != 0) and (len(weather_db) == 0):
-            print("test add")
-            # db.session.add_all(weather_list)
-            # db.session.commit()
+            db.session.add_all(weather_list)
+            db.session.commit()
 
     @classmethod
     def update_weather_now_db(cls, db):
 
         weather_db = WeatherNow.query.all()
         weather_dict = cls.get_weather_now(URL_WEATHER)
-        weather_list = list(weather_dict.values())
+        # weather_list = list(weather_dict.values())
+        print(f"dicionario size : {len(weather_dict.values())}")
 
-        if (weather_list != 0) and (len(weather_db) != 0):
-            print(weather_list)
-            '''for weather in weather_db:
+        if len(weather_dict) != 0 and len(weather_db) != 0:
+            for weather in weather_db:
                 if cls.check_date(weather.time_of_day):
-                    weather_city = weather_dict[weather.city_name]
+                    temp_weather = weather_dict[weather.city_name]
+                    # print(temp_weather.week_weather)
+                    # print(temp_weather.week_weather.all())
                     db.session.query(WeatherNow).filter(WeatherNow.city_name ==
-                                                        weather_city.city_name) \
-                        .update({'time_of_day': weather_city.time_of_day,
-                                 'temperature': weather_city.temperature,
-                                 'description': weather_city.description,
-                                 'preciptation': weather_city.preciptation,
-                                 'humidity': weather_city.humidity,
-                                 'wind': weather_city.wind})
-                    db.session.commit() '''
+                                                        temp_weather.city_name).update({
+                        'city_name': temp_weather.city_name,
+                        'time_of_day': temp_weather.time_of_day,
+                        'temperature': temp_weather.temperature,
+                        'description': temp_weather.description,
+                        'preciptation': temp_weather.preciptation,
+                        'humidity': temp_weather.humidity,
+                        'wind': temp_weather.wind})
+                    for date_week in temp_weather.week_weather:
+                        print(date_week)
+                        db.session.query(WeatherDay).filter(WeatherDay.weather_id == weather.id).update(
+                            {'day_of_week': date_week.day_of_week,
+                             'description': date_week.description,
+                             'min_temperature': date_week.min_temperature,
+                             'max_temperature': date_week.max_temperature,
+                             })
+                    db.session.commit()
 
         else:
             print(f"No need to update Weather data !!")

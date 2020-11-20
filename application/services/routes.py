@@ -3,9 +3,8 @@ from flask import jsonify
 
 from application.models.radio_station import Radio
 from application.models.radio_station import RadioSchema
-from application.models.radio_station import db
+from application.models.weather import WeatherDay, WeatherDaySchema
 from application.models.weather import WeatherNow, WeatherNowSchema
-from application.utilities.weather_utilities import WeatherUtilities as W_uti
 
 URL_WEATHER = "https://www.google.com/search?lr=lang_en&ie=UTF-8&q=weather"
 ANGOLA_PROVINCES = ['Bengo', 'Benguela', 'Kuito', 'Cabinda', 'Menongue', "N'dalatando", 'Sumbe', 'Ondjiva',
@@ -16,18 +15,21 @@ rs_schema = RadioSchema(many=True)
 
 wnow_schema = WeatherNowSchema()
 wnows_schema = WeatherNowSchema(many=True)
+week_schema = WeatherDaySchema()
+weeks_schema = WeatherDaySchema(many=True)
 
 
 @app.before_first_request
 def before_first_request_func():
-    print("print called before first request")
+    # W_uti.add_weather_now_db(db)
+    # print("print called before first request")
     # if not R_uti.add_radio_db(db) :
     #    print("updating radios....")
-    #    R_uti.update_radio_db(db)
+    #   R_uti.update_radio_db(db)
+    # W_uti.add_weather_now_db(db)
+    print("updating weather now....")
+    # W_uti.update_weather_now_db(db)
 
-    if not W_uti.add_weather_now_db(db):
-        print("updating weather now....")
-        W_uti.update_weather_now_db(db)
 
 @app.route("/", methods=["GET"])
 @app.route("/home", methods=["GET"])
@@ -54,7 +56,7 @@ def get_radio_by_id(radio_id):
         return jsonify(r_schema.dump(radio_)), 200
 
 
-@app.route("/api/v1/<string:radio_name>", methods=["GET"])
+@app.route("/api/v1/radio/<string:radio_name>", methods=["GET"])
 def get_radio_name(radio_name):
     radio_ = Radio.query.filter_by(r_name=radio_name).first()
     if radio_ is None:
@@ -62,21 +64,29 @@ def get_radio_name(radio_name):
             'message': 'this radio does not exist'
         }
         return jsonify(response), 404
-    else :
+    else:
         return jsonify(r_schema.dump(radio_)), 200
+
 
 @app.route("/api/v1/weathernow", methods=["GET"])
 def weathernow():
     weather_db = WeatherNow.query.all()
     return jsonify(wnows_schema.dump(weather_db)), 200
 
+
 @app.route("/api/v1/weathernext", methods=["GET"])
 def weathernext():
-    for region in ANGOLA_PROVINCES:
-        temp_url = URL_WEATHER + f"+{region}"
-        soup = W_uti.get_weather_soup(temp_url)
-        weather = W_uti.get_weather_next_days(soup)
-        temp_url = ""
-        print(weather)
+    weather_db = WeatherDay.query.all()
+    return jsonify(weeks_schema.dump(weather_db)), 200
 
-    return jsonify(), 200
+
+@app.route("/api/v1/weather/<string:province>", methods=["GET"])
+def weatherprovince(province):
+    w_province = WeatherNow.query.filter(WeatherNow.city_name.ilike('%' + province + '%')).first()
+    if w_province is None:
+        response = {
+            'message': 'this unable to generate weather'
+        }
+        return jsonify(response), 404
+    else:
+        return jsonify(wnow_schema.dump(w_province)), 200
