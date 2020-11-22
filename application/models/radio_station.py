@@ -16,16 +16,19 @@ class Radio(db.Model):
         self.stream_link = stream_link
         self.img_logo = img_logo'''
 
-    def __init__(self,r_name, url, stream_link, img_logo):
+    def __init__(self, r_name, url, stream_link, img_logo):
         self.r_name = r_name
         self.url = url
         self.stream_link = stream_link
         self.img_logo = img_logo
 
     def __str__(self):
-        return "Radio(r_name:{self.r_name!r}, url:{self.url!r} , stream_link:{self.stream_link!r} ,img_logo:{self.img_logo!r})".format(self=self)
+        return "Radio(r_name:{self.r_name!r}, url:{self.url!r} , stream_link:{self.stream_link!r} ," \
+               "img_logo:{self.img_logo!r})".format(self=self)
+
     def __repr__(self):
-        return "radio(r_name:{self.r_name!r}, url:{self.url!r} , stream_link:{self.stream_link!r} , img_logo:{self.img_logo!r})".format(self=self)
+        return "radio(r_name:{self.r_name!r}, url:{self.url!r} , stream_link:{self.stream_link!r} ," \
+               " img_logo:{self.img_logo!r})".format(self=self)
 
     def asdict(self):
         return {'r_name':self.r_name, 'url':self.url , 'stream_link':self.stream_link , 'img_logo':self.img_logo}
