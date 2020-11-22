@@ -17,9 +17,6 @@ def create_app():
 
     with app.app_context():
         # Include our Routes
-
+        from application.services import routes
         db.create_all()
-
-
-
     return app
