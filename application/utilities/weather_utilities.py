@@ -4,9 +4,8 @@ import requests
 from bs4 import BeautifulSoup as Bs
 from requests import HTTPError
 
-from application.models.weather import WeatherNow, WeatherDay
+from application.models.weather import WeatherNow, Forecast
 
-URL_WEATHER = "https://www.google.com/search?lr=lang_en&ie=UTF-8&q=weather"
 ANGOLA_PROVINCES = ['Bengo', 'Benguela', 'Kuito', 'Cabinda', 'Menongue', "N'dalatando", 'Sumbe', 'Ondjiva',
                     'Huambo', 'Lubango', 'Luanda', 'Dundo', 'Saurimo', 'Malanje', 'Luena', 'Namibe', 'Uíge', 'Zaire']
 
@@ -25,6 +24,10 @@ session.headers['Content-Language'] = LANGUAGE
 class WeatherUtilities(object):
 
     @classmethod
+    def update_progress(cls, progress):
+        print("\rProgress: [{0:50s}] {1:.1f}%".format('#' * int(progress * 50), progress * 100), end="", flush=True)
+
+    @classmethod
     def get_weather_soup(cls, url):
         try:
             html = session.get(url)
@@ -39,12 +42,13 @@ class WeatherUtilities(object):
     @classmethod
     def get_weather_now(cls, url):
         data_weather = {}
+        progress = 0
         try:
             for region in ANGOLA_PROVINCES:
+
+                progress += 1
                 temp_url = url + f"+{region}"
                 soup = cls.get_weather_soup(temp_url)
-                print(temp_url)
-                # print(soup.prettify())
                 result = dict()
                 # extract data
                 result['city_name'] = soup.find("div", attrs={"id": "wob_loc"}).text
@@ -56,6 +60,7 @@ class WeatherUtilities(object):
                 result['wind'] = soup.find("span", attrs={"id": "wob_ws"}).text
 
                 next_days = []
+
                 days = soup.find("div", attrs={"id": "wob_dp"})
                 for day in days.findAll("div", attrs={"class": "wob_df"}):
                     # extract the name of the day
@@ -68,7 +73,7 @@ class WeatherUtilities(object):
                     # minimum temparature in Celsius, use temp[3].text if you want fahrenheit
                     min_temp = temp[2].text
 
-                    n_day = WeatherDay(day_name, description, min_temp, max_temp)
+                    n_day = Forecast(day_name, description, min_temp, max_temp)
                     next_days.append(n_day)
 
                     result['week_weather'] = next_days
@@ -77,62 +82,68 @@ class WeatherUtilities(object):
                                           result['description'], result['preciptation'], result['humidity'],
                                           result['wind'], result['week_weather'])
 
+                working = progress / len(ANGOLA_PROVINCES)
+                cls.update_progress(working)
                 data_weather.update({_weather.city_name: _weather})
-            #print (data_weather.values())
+            # print (data_weather.values())
+
         except HTTPError:
             print(f"get weather data Http error. code : {HTTPError}")
         except ConnectionError:
             print(f"get weather data now connection error. code : {ConnectionError}")
+        except Exception as error:
+            print(f"main error : {error}")
         finally:
             return data_weather
 
-
     @classmethod
-    def add_weather_now_db(cls, db):
+    def add_weather_db(cls, weather_data, db):
 
         weather_db = WeatherNow.query.all()
-        weather_dict = cls.get_weather_now(URL_WEATHER)
-        weather_list = list(weather_dict.values())
-
-        if (weather_list != 0) and (len(weather_db) == 0):
-            db.session.add_all(weather_list)
-            db.session.commit()
+        status = False
+        try:
+            if (list(weather_data.values()) != 0) and (len(weather_db) == 0):
+                db.session.add_all(list(weather_data.values()))
+                db.session.commit()
+                status = True
+        except Exception:
+            print(f"error adding the weather to db: {Exception}")
+        finally:
+            return status
 
     @classmethod
-    def update_weather_now_db(cls, db):
+    def update_weather_db(cls, weather_data, db):
 
         weather_db = WeatherNow.query.all()
-        weather_dict = cls.get_weather_now(URL_WEATHER)
-        # weather_list = list(weather_dict.values())
-        print(f"dicionario size : {len(weather_dict.values())}")
+        # print(f"dicionario size : {len(new_weather_data.values())}")
+        try:
+            if len(weather_data.values()) != 0 and len(weather_db) != 0:
+                for weather in weather_db:
+                    if cls.check_date(weather.time_of_day):
+                        temp_weather = weather_data[weather.city_name]
+                        db.session.query(WeatherNow).filter(WeatherNow.city_name ==
+                                                            temp_weather.city_name).update({
+                            'city_name': temp_weather.city_name,
+                            'time_of_day': temp_weather.time_of_day,
+                            'temperature': temp_weather.temperature,
+                            'description': temp_weather.description,
+                            'preciptation': temp_weather.preciptation,
+                            'humidity': temp_weather.humidity,
+                            'wind': temp_weather.wind})
 
-        if len(weather_dict) != 0 and len(weather_db) != 0:
-            for weather in weather_db:
-                if cls.check_date(weather.time_of_day):
-                    temp_weather = weather_dict[weather.city_name]
-                    # print(temp_weather.week_weather)
-                    # print(temp_weather.week_weather.all())
-                    db.session.query(WeatherNow).filter(WeatherNow.city_name ==
-                                                        temp_weather.city_name).update({
-                        'city_name': temp_weather.city_name,
-                        'time_of_day': temp_weather.time_of_day,
-                        'temperature': temp_weather.temperature,
-                        'description': temp_weather.description,
-                        'preciptation': temp_weather.preciptation,
-                        'humidity': temp_weather.humidity,
-                        'wind': temp_weather.wind})
-                    for date_week in temp_weather.week_weather:
-                        print(date_week)
-                        db.session.query(WeatherDay).filter(WeatherDay.weather_id == weather.id).update(
-                            {'day_of_week': date_week.day_of_week,
-                             'description': date_week.description,
-                             'min_temperature': date_week.min_temperature,
-                             'max_temperature': date_week.max_temperature,
-                             })
-                    db.session.commit()
+                        for week_day in temp_weather.forecast_week:
+                            db.session.query(Forecast).filter(Forecast.weather_id == weather.id,
+                                                              Forecast.day == week_day.day_of_week).update(
+                                {'day_of_week': week_day.day_of_week,
+                                 'description': week_day.description,
+                                 'min_temperature': week_day.min_temperature,
+                                 'max_temperature': week_day.max_temperature})
 
-        else:
-            print(f"No need to update Weather data !!")
+                        db.session.commit()
+            else:
+                print(f"No need to update Weather data !!")
+        except Exception:
+            print(f"error updating the weather: {Exception}")
 
     @classmethod
     def check_date(cls, date_db):
@@ -147,7 +158,7 @@ class WeatherUtilities(object):
 
         temp_date = time_now.replace(day=index_day, hour=int(db_hour), minute=int(db_minute), second=0)
         diff_hours = (time_now - temp_date).seconds / 3600
-        if diff_hours >= 1:
+        if diff_hours + 1 >= 1:
             return True
         else:
             return False
