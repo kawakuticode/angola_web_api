@@ -107,33 +107,39 @@ class RadioUtilities(object):
             print(f"get radio Http error. code : {HTTPError}")
         except ConnectionError:
             print(f"get radio data connection error. code : {ConnectionError}")
+        except Exception:
+            raise
+            print(f"exception {Exception}")
         finally:
             return data_radio
 
     @classmethod
-    def add_radio_db(cls, db):
-
-        radio_dict = cls.get_radio_data(_URL)
-        radio_list = list(radio_dict.values())
+    def add_radio_db(cls, radio_webdata, db):
+        status = False
         radio_list_db = Radio.query.all()
-
-        if (len(radio_list) != 0) and (len(radio_list_db) == 0):
-            db.session.add_all(radio_list)
-            db.session.commit()
+        try:
+            if (len(radio_webdata.values()) != 0) and (len(radio_list_db) == 0):
+                db.session.add_all(list(radio_webdata.values()))
+                db.session.commit()
+                status = True
+        except Exception:
+            raise
+            print(f"exception {Exception}")
+        finally:
+            return status
 
     @classmethod
-    def update_radio_db(cls, db):
-
-        radio_dict = cls.get_radio_data(_URL)
-        radio_list = list(radio_dict.values())
+    def update_radio_db(cls, radio_webdata, db):
         radio_db = Radio.query.all()
-
-        if (radio_list != 0) and (len(radio_db) != 0):
-            for radio_ in radio_list:
-                db.session.query(Radio). \
-                    filter(Radio.r_name == radio_.r_name). \
-                    update({'r_name': radio_.r_name, 'url': radio_.url,
-                            'stream_link': radio_.stream_link, 'img_logo': radio_.img_logo})
+        try:
+            if (len(radio_webdata) != 0) and (len(radio_db) == 0):
+                for radio_ in radio_webdata.values():
+                    db.session.query(Radio). \
+                        filter(Radio.r_name == radio_.r_name). \
+                        update({'r_name': radio_.r_name, 'url': radio_.url,
+                                'stream_link': radio_.stream_link, 'img_logo': radio_.img_logo})
                 db.session.commit()
-        else:
-            print(f"No need to update radios data!!")
+            else:
+                print(f"No need to update radios data!!")
+        except Exception:
+            raise

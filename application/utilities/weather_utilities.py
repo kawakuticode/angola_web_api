@@ -92,6 +92,7 @@ class WeatherUtilities(object):
         except ConnectionError:
             print(f"get weather data now connection error. code : {ConnectionError}")
         except Exception as error:
+            raise
             print(f"main error : {error}")
         finally:
             return data_weather
@@ -107,13 +108,13 @@ class WeatherUtilities(object):
                 db.session.commit()
                 status = True
         except Exception:
+            raise
             print(f"error adding the weather to db: {Exception}")
         finally:
             return status
 
     @classmethod
     def update_weather_db(cls, weather_data, db):
-
         weather_db = WeatherNow.query.all()
         # print(f"dicionario size : {len(new_weather_data.values())}")
         try:
@@ -122,19 +123,19 @@ class WeatherUtilities(object):
                     if cls.check_date(weather.time_of_day):
                         temp_weather = weather_data[weather.city_name]
                         db.session.query(WeatherNow).filter(WeatherNow.city_name ==
-                                                            temp_weather.city_name).update({
-                            'city_name': temp_weather.city_name,
-                            'time_of_day': temp_weather.time_of_day,
-                            'temperature': temp_weather.temperature,
-                            'description': temp_weather.description,
-                            'preciptation': temp_weather.preciptation,
-                            'humidity': temp_weather.humidity,
-                            'wind': temp_weather.wind})
+                                                            temp_weather.city_name) \
+                            .update({'city_name': temp_weather.city_name,
+                                     'time_of_day': temp_weather.time_of_day,
+                                     'temperature': temp_weather.temperature,
+                                     'description': temp_weather.description,
+                                     'preciptation': temp_weather.preciptation,
+                                     'humidity': temp_weather.humidity,
+                                     'wind': temp_weather.wind})
 
                         for week_day in temp_weather.forecast_week:
                             db.session.query(Forecast).filter(Forecast.weather_id == weather.id,
-                                                              Forecast.day == week_day.day_of_week).update(
-                                {'day_of_week': week_day.day_of_week,
+                                                              Forecast.day == week_day.day).update(
+                                {'day': week_day.day,
                                  'description': week_day.description,
                                  'min_temperature': week_day.min_temperature,
                                  'max_temperature': week_day.max_temperature})
@@ -143,6 +144,7 @@ class WeatherUtilities(object):
             else:
                 print(f"No need to update Weather data !!")
         except Exception:
+            raise
             print(f"error updating the weather: {Exception}")
 
     @classmethod

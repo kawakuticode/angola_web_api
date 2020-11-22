@@ -1,8 +1,6 @@
 
-from marshmallow import fields
-
 from application.application_factory import db
-from application.application_factory import ma
+
 
 
 class WeatherNow(db.Model):
@@ -16,7 +14,7 @@ class WeatherNow(db.Model):
     preciptation = db.Column(db.TEXT, index=True, nullable=False)
     humidity = db.Column(db.TEXT, index=True, nullable=False)
     wind = db.Column(db.TEXT, index=True, nullable=False)
-    forecast_week = db.relationship("Forecast", backref=db.backref('WeatherNow', lazy='dynamic'), lazy='dynamic')
+    forecast_week = db.relationship("Forecast", backref=db.backref('WeatherNow', lazy='joined'), lazy='dynamic')
 
     def __init__(self, city_name, time_of_day, temperature, description, preciptation, humidity, wind, forecast_week):
         self.city_name = city_name
@@ -58,24 +56,9 @@ class Forecast(db.Model):
         self.max_temperature = max_temperature
 
     def __str__(self):
-        return f"[day:{self.day_of_week},description:{self.description}, min_temperature:{self.min_temperature}ºC," \
-               f" max_temperature:{self.max_temperature}ºC]"
+        return f"(day:{self.day_of_week},description:{self.description}, min_temperature:{self.min_temperature}ºC," \
+               f" max_temperature:{self.max_temperature}ºC)"
 
     def __repr__(self):
-        return f"[day:{self.day_of_week},description:{self.description}, min_temperature:{self.min_temperature}ºC," \
-               f" max_temperature:{self.max_temperature}ºC]"
-
-
-class WeatherNowSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = WeatherNow
-        include_relationships = True
-        load_instance = True
-
-    forecast_week = fields.Nested('ForecastSchema', many=True, load=True)
-
-
-class ForecastSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Forecast
-        load_instance = True
+        return f"(day:{self.day_of_week},description:{self.description}, min_temperature:{self.min_temperature}ºC," \
+               f" max_temperature:{self.max_temperature}ºC)s"
