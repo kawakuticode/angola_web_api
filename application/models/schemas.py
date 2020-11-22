@@ -10,7 +10,6 @@ class WeatherNowSchema(ma.SQLAlchemyAutoSchema):
         model = WeatherNow
         include_relationships = True
         load_instance = True
-
     forecast_week = fields.Nested('ForecastSchema', many=True, load=True)
 
 

@@ -9,9 +9,8 @@ ma = Marshmallow()
 
 def create_app():
     """Initialize the core application."""
-    # app = Flask(__name__, instance_relative_config=False)
-    app = Flask(__name__)
-    app.config.from_object('config.DevConfig')
+    app = Flask(__name__, instance_relative_config=False)
+    app.config.from_object('config.ProdConfig')
 
     db.init_app(app)
     ma.init_app(app)
@@ -19,10 +18,8 @@ def create_app():
     with app.app_context():
         # Include our Routes
 
-        # db.drop_all()
-        db.create_all()  # Create sql tables for our data models
+        db.create_all()
 
-        # print(db.session)
-        # db.session.commit()
+
 
     return app

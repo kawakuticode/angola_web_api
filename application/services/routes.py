@@ -68,7 +68,7 @@ def weatherprovince(province):
     w_province = WeatherNow.query.filter(WeatherNow.city_name.ilike('%' + province + '%')).first()
     if w_province is None:
         response = {
-            'message': 'exchange name to capital name - unable to generate weather for --> ' + province
+            'message': 'exchange city name to capital name - unable to generate weather for --> ' + province
         }
         return jsonify(response), 404
     else:

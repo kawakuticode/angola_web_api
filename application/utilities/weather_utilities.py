@@ -85,21 +85,17 @@ class WeatherUtilities(object):
                 working = progress / len(ANGOLA_PROVINCES)
                 cls.update_progress(working)
                 data_weather.update({_weather.city_name: _weather})
-            # print (data_weather.values())
-
         except HTTPError:
             print(f"get weather data Http error. code : {HTTPError}")
         except ConnectionError:
             print(f"get weather data now connection error. code : {ConnectionError}")
         except Exception as error:
-            raise
             print(f"main error : {error}")
         finally:
             return data_weather
 
     @classmethod
     def add_weather_db(cls, weather_data, db):
-
         weather_db = WeatherNow.query.all()
         status = False
         try:
@@ -108,15 +104,14 @@ class WeatherUtilities(object):
                 db.session.commit()
                 status = True
         except Exception:
-            raise
             print(f"error adding the weather to db: {Exception}")
         finally:
+            db.session.close()
             return status
 
     @classmethod
     def update_weather_db(cls, weather_data, db):
         weather_db = WeatherNow.query.all()
-        # print(f"dicionario size : {len(new_weather_data.values())}")
         try:
             if len(weather_data.values()) != 0 and len(weather_db) != 0:
                 for weather in weather_db:
@@ -144,8 +139,9 @@ class WeatherUtilities(object):
             else:
                 print(f"No need to update Weather data !!")
         except Exception:
-            raise
             print(f"error updating the weather: {Exception}")
+        finally:
+            db.session.close()
 
     @classmethod
     def check_date(cls, date_db):
@@ -160,7 +156,7 @@ class WeatherUtilities(object):
 
         temp_date = time_now.replace(day=index_day, hour=int(db_hour), minute=int(db_minute), second=0)
         diff_hours = (time_now - temp_date).seconds / 3600
-        if diff_hours + 1 >= 1:
+        if diff_hours >= 1:
             return True
         else:
             return False

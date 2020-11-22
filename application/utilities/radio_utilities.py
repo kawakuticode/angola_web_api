@@ -22,13 +22,14 @@ class RadioUtilities(object):
 
     @classmethod
     def get_radio_soup(cls, url):
+        soup = ""
         try:
             html = session.get(url)
             soup = Bs(html.text, "html.parser")
         except HTTPError:
-            print(f"get weather soup error with code {HTTPError}")
+            print(f"get radio soup http_error with code {HTTPError}")
         except ConnectionError:
-            print(f"get weather soup error with code {ConnectionError}")
+            print(f"get radio soup error_connection with code {ConnectionError}")
         finally:
             return soup
 
@@ -70,16 +71,14 @@ class RadioUtilities(object):
 
     @classmethod
     def get_radio_stream_url(cls, radio_url):
+        url_stream = ''
         try:
             soup = cls.get_radio_soup(radio_url)
             player = soup.find(class_="player")
-            link = player.find('li').find('a').get('href')
-            if player is not None and link is not None:
-                url_stream = link
-        except HTTPError:
-            print(f"get stream page url Http error. code : {HTTPError}")
-        except ConnectionError:
-            print(f"get stream page url connection error . code : {ConnectionError}")
+            if player is not None:
+                url_stream = player.find('li').find('a').get('href')
+        except Exception:
+            print(f"url stream error {Exception}")
         finally:
             return url_stream
 
@@ -104,12 +103,11 @@ class RadioUtilities(object):
             else:
                 print(f"radio list not found")
         except HTTPError:
-            print(f"get radio Http error. code : {HTTPError}")
+            print(f"get radio_webdata! Http error. code : {HTTPError}")
         except ConnectionError:
-            print(f"get radio data connection error. code : {ConnectionError}")
+            print(f"get radio_webdata! connection error. code : {ConnectionError}")
         except Exception:
-            raise
-            print(f"exception {Exception}")
+            print(f"Error while creating  radio_webdata! code: {Exception}")
         finally:
             return data_radio
 
@@ -118,28 +116,30 @@ class RadioUtilities(object):
         status = False
         radio_list_db = Radio.query.all()
         try:
-            if (len(radio_webdata.values()) != 0) and (len(radio_list_db) == 0):
+            if (len(radio_webdata) != 0) and (len(radio_list_db) == 0):
                 db.session.add_all(list(radio_webdata.values()))
                 db.session.commit()
                 status = True
         except Exception:
-            raise
-            print(f"exception {Exception}")
+            print(f"Error while adding radio_webdata code : {Exception}")
         finally:
+            db.session.close()
             return status
 
     @classmethod
     def update_radio_db(cls, radio_webdata, db):
         radio_db = Radio.query.all()
         try:
-            if (len(radio_webdata) != 0) and (len(radio_db) == 0):
-                for radio_ in radio_webdata.values():
+            if len(radio_webdata) != 0 and len(radio_db) != 0:
+                for radio_web in radio_webdata.values():
                     db.session.query(Radio). \
-                        filter(Radio.r_name == radio_.r_name). \
-                        update({'r_name': radio_.r_name, 'url': radio_.url,
-                                'stream_link': radio_.stream_link, 'img_logo': radio_.img_logo})
+                        filter(Radio.r_name == radio_web.r_name). \
+                        update({'r_name': radio_web.r_name, 'url': radio_web.url,
+                                'stream_link': radio_web.stream_link, 'img_logo': radio_web.img_logo})
                 db.session.commit()
             else:
                 print(f"No need to update radios data!!")
         except Exception:
-            raise
+            print(f"unable to update radio_webdata {Exception}")
+        finally:
+            db.session.close()
