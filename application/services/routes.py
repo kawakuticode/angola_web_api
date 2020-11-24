@@ -18,9 +18,8 @@ rs_schema = RadioSchema(many=True)
 wnow_schema = WeatherNowSchema()
 wnows_schema = WeatherNowSchema(many=True)
 #function executed by scheduled job
-
 def update_all_db_job(text):
-    app.app_context().push()
+    app.app_context()
 
     print(text, str(datetime.datetime.now()))
     weather_data = weather_utilities.get_weather_now(URL_WEATHER)
