@@ -1,10 +1,16 @@
+
+
 from flask import Flask
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 
-# Globally accessible libraries
+
+
+
 db = SQLAlchemy()
 ma = Marshmallow()
+
+
 
 
 def create_app():
@@ -19,4 +25,10 @@ def create_app():
         # Include our Routes
         from application.services import routes
         db.create_all()
+
     return app
+
+
+
+
+

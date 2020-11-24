@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 
 import requests
 from bs4 import BeautifulSoup as Bs
@@ -47,13 +48,17 @@ class WeatherUtilities(object):
             for region in ANGOLA_PROVINCES:
 
                 progress += 1
+                working = progress / len(ANGOLA_PROVINCES)
+                cls.update_progress(working)
+
                 temp_url = url + f"+{region}"
                 soup = cls.get_weather_soup(temp_url)
                 result = dict()
                 # extract data
                 result['city_name'] = soup.find("div", attrs={"id": "wob_loc"}).text
                 result['temperature'] = soup.find("span", attrs={"id": "wob_tm"}).text
-                result['time_of_day'] = soup.find("div", attrs={"id": "wob_dts"}).text
+                time_tmp = soup.find("div", attrs={"id": "wob_dts"}).text
+                result['time_of_day'] = cls.time_weatherdata (time_tmp)
                 result['description'] = soup.find("span", attrs={"id": "wob_dc"}).text
                 result['preciptation'] = soup.find("span", attrs={"id": "wob_pp"}).text
                 result['humidity'] = soup.find("span", attrs={"id": "wob_hm"}).text
@@ -82,15 +87,15 @@ class WeatherUtilities(object):
                                           result['description'], result['preciptation'], result['humidity'],
                                           result['wind'], result['week_weather'])
 
-                working = progress / len(ANGOLA_PROVINCES)
-                cls.update_progress(working)
+
+
                 data_weather.update({_weather.city_name: _weather})
         except HTTPError:
             print(f"get weather data Http error. code : {HTTPError}")
         except ConnectionError:
             print(f"get weather data now connection error. code : {ConnectionError}")
         except Exception as error:
-            print(f"main error : {error}")
+            print(f"main error getting weather data : {error}")
         finally:
             return data_weather
 
@@ -114,8 +119,8 @@ class WeatherUtilities(object):
         weather_db = WeatherNow.query.all()
         try:
             if len(weather_data.values()) != 0 and len(weather_db) != 0:
-                for weather in weather_db:
-                    if cls.check_date(weather.time_of_day):
+                if cls.check_date(weather_db[0].time_of_day):
+                    for weather in weather_db:
                         temp_weather = weather_data[weather.city_name]
                         db.session.query(WeatherNow).filter(WeatherNow.city_name ==
                                                             temp_weather.city_name) \
@@ -136,27 +141,40 @@ class WeatherUtilities(object):
                                  'max_temperature': week_day.max_temperature})
 
                         db.session.commit()
-            else:
-                print(f"No need to update Weather data !!")
+                else:
+                    print(f"No need to update Weather data !!")
         except Exception:
             print(f"error updating the weather: {Exception}")
         finally:
             db.session.close()
 
     @classmethod
+    def time_weatherdata (cls, t_stamp):
+
+        time_system = datetime.now()
+        time_weather =t_stamp.split(' ')[1] .split(':')
+        w_hour = time_weather[0]
+        w_minutes = time_weather[1]
+        time_of_day = time_system.replace(hour=int(w_hour), minute=int(w_minutes), second=0, microsecond=0)
+        return time_of_day
+
+
+
+
+
+    @classmethod
     def check_date(cls, date_db):
+        condition = False
+        try:
+            time_now = datetime.now()
+            time_db = datetime.strptime(date_db, '%Y-%m-%d %H:%M:%S.%f')
+            diff_hours = abs(time_now - time_db).seconds / 3600
 
-        time_now = datetime.now()
-        date_to_check = date_db.split()
-        day_of_week_db = date_to_check[0]
-        time_hrs_minutes = date_to_check[1].split(':')
-        db_hour = time_hrs_minutes[0]
-        db_minute = time_hrs_minutes[1]
-        index_day = WEEK.index(day_of_week_db)
+            print(diff_hours)
+            if diff_hours >= 1:
+                condition =  True
 
-        temp_date = time_now.replace(day=index_day, hour=int(db_hour), minute=int(db_minute), second=0)
-        diff_hours = (time_now - temp_date).seconds / 3600
-        if diff_hours >= 1:
-            return True
-        else:
-            return False
+        except  ValueError :
+            print("Unable to check date")
+        finally :
+            return condition
