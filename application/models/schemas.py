@@ -1,7 +1,7 @@
 from marshmallow import fields
 
 from application.application_factory import ma
-from application.models.radio_station import Radio
+from application.models.model import Radio
 from application.models.weather import WeatherNow, Forecast
 
 

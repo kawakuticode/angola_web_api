@@ -1,13 +1,11 @@
+from datetime import datetime
 from urllib.parse import urljoin
-
 import requests
 from bs4 import BeautifulSoup as Bs
 from requests import HTTPError
-
-from application.models.radio_station import Radio
+from application.models.model import Radio
 
 _URL = "http://radios.sapo.ao"
-
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 " \
              "Safari/537.36"
 LANGUAGE = "pt-PT,pt;q=0.8,pt-BR;q=0.7"

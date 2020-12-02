@@ -1,11 +1,8 @@
 from flask import current_app as app
 from flask import jsonify
-import datetime
-from flask_apscheduler import APScheduler
-from application.application_factory import db
-from application.models.radio_station import Radio
+from datetime import datetime
 from application.models.schemas import RadioSchema, WeatherNowSchema
-from application.models.weather import Forecast, WeatherNow
+from application.models.model import db, Radio, WeatherNow, Forecast
 from application.utilities.radio_utilities import RadioUtilities as radio_utilities
 from application.utilities.weather_utilities import WeatherUtilities as weather_utilities
 
@@ -18,31 +15,22 @@ rs_schema = RadioSchema(many=True)
 wnow_schema = WeatherNowSchema()
 wnows_schema = WeatherNowSchema(many=True)
 #function executed by scheduled job
-def update_all_db_job(text):
-    app.app_context()
 
-    print(text, str(datetime.datetime.now()))
+
+@app.before_first_request
+def before_first_request_func():
+    print("server started : ", datetime.now())
     weather_data = weather_utilities.get_weather_now(URL_WEATHER)
     radios_data = radio_utilities.get_radio_data(_URL)
 
     if not radio_utilities.add_radio_db(radios_data, db):
-        print("updating radios.... job")
+        print("updating radios.... on start")
         radio_utilities.update_radio_db(radios_data, db)
     if not weather_utilities.add_weather_db(weather_data, db):
-        print("updating weather now....job")
+        print("updating weather now....on start")
         weather_utilities.update_weather_db(weather_data, db)
 
 
-
-def start_scheduler_db ():
-    scheduler = APScheduler()
-    scheduler.add_job(func=update_all_db_job, args=['schedule database update'], trigger='interval', id='job', minutes=2)
-    scheduler.start()
-
-@app.before_first_request
-def before_first_request_func():
-    update_all_db_job('starting server ... ')
-    start_scheduler_db()
 
 
 @app.route("/", methods=["GET"])

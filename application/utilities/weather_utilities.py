@@ -87,8 +87,6 @@ class WeatherUtilities(object):
                                           result['description'], result['preciptation'], result['humidity'],
                                           result['wind'], result['week_weather'])
 
-
-
                 data_weather.update({_weather.city_name: _weather})
         except HTTPError:
             print(f"get weather data Http error. code : {HTTPError}")
@@ -117,6 +115,7 @@ class WeatherUtilities(object):
     @classmethod
     def update_weather_db(cls, weather_data, db):
         weather_db = WeatherNow.query.all()
+
         try:
             if len(weather_data.values()) != 0 and len(weather_db) != 0:
                 if cls.check_date(weather_db[0].time_of_day):
@@ -144,6 +143,7 @@ class WeatherUtilities(object):
                 else:
                     print(f"No need to update Weather data !!")
         except Exception:
+            raise Exception
             print(f"error updating the weather: {Exception}")
         finally:
             db.session.close()
@@ -155,26 +155,25 @@ class WeatherUtilities(object):
         time_weather =t_stamp.split(' ')[1] .split(':')
         w_hour = time_weather[0]
         w_minutes = time_weather[1]
-        time_of_day = time_system.replace(hour=int(w_hour), minute=int(w_minutes), second=0, microsecond=0)
-        return time_of_day
+        time_of_day = time_system.replace(hour=int(w_hour), minute=int(w_minutes), second=0)
 
-
-
-
+        return time_of_day.strftime('%Y-%m-%d %H:%M:%S.%f')
 
     @classmethod
     def check_date(cls, date_db):
+
         condition = False
+
         try:
-            time_now = datetime.now()
             time_db = datetime.strptime(date_db, '%Y-%m-%d %H:%M:%S.%f')
-            diff_hours = abs(time_now - time_db).seconds / 3600
+            time_now = datetime.now()
+            delta_time = time_now - time_db
+            diff_time_hr = delta_time.total_seconds() / 3600
+            print(diff_time_hr)
 
-            print(diff_hours)
-            if diff_hours >= 1:
-                condition =  True
-
-        except  ValueError :
+            if (diff_time_hr > 1):
+                condition = True
+        except  Exception:
             print("Unable to check date")
-        finally :
+        finally:
             return condition
