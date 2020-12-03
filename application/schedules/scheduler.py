@@ -34,7 +34,7 @@ def register_scheduler(app):
          'func': update_database_all,
          'args': [app],
          'trigger': 'interval',
-         'minutes': 3}]
+         'minutes': 60}]
 
     flask_env = app.config.get('FLASK_ENV')
     if flask_env == 'development':
