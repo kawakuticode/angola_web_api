@@ -28,6 +28,7 @@ def register_scheduler(app):
          'args': [app],
          'trigger': 'interval',
          'minutes': 3}]
+
     PROD_JOBS = [
         {'id': 'update_database',
          'func': update_database_all,
