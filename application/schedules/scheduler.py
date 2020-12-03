@@ -28,10 +28,18 @@ def register_scheduler(app):
          'args': [app],
          'trigger': 'interval',
          'minutes': 3}]
+    PROD_JOBS = [
+        {'id': 'update_database',
+         'func': update_database_all,
+         'args': [app],
+         'trigger': 'interval',
+         'minutes': 3}]
 
     flask_env = app.config.get('FLASK_ENV')
     if flask_env == 'development':
         app.config.update(JOBS=DEV_JOBS)
+    else:
+        app.config.update(JOBS=PROD_JOBS)
 
     if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         scheduler = APScheduler()
