@@ -150,7 +150,7 @@ class WeatherUtilities(object):
                 """filter database by date to check if passed 1hr to update weather database ."""
                 checked_date_weather = filter(lambda weather : cls.check_date(weather.time_of_day) , weather_db)
                 """update the filtered ones"""
-                updated_weather = [cls.update_weather(weather, weather_data[weather.city_name] , db ) for weather in checked_date_weather]
+                updated_weather = [cls.update_weather( weather_data[weather.city_name] , db ) for weather in checked_date_weather]
 
                 if not updated_weather :
                     print(f"No need to update Weather data !!")
