@@ -20,7 +20,6 @@ class RadioUtilities(object):
 
     @classmethod
     def get_radio_soup(cls, url):
-        soup = ""
         try:
             html = session.get(url)
             soup = Bs(html.text, "html.parser")

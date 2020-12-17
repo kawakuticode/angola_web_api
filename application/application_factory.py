@@ -7,9 +7,6 @@ from application.models.model import db
 # db = SQLAlchemy()
 ma = Marshmallow()
 
-
-
-
 def create_app():
     """Initialize the core application."""
     app = Flask(__name__, instance_relative_config=False)

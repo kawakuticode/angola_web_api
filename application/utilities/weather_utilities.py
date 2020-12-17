@@ -112,35 +112,47 @@ class WeatherUtilities(object):
             db.session.close()
             return status
 
+
+
+    @classmethod
+    def update_weather(cls,weather_database , db):
+        print(weather_database)
+        try:
+            db.session.query(WeatherNow).filter(WeatherNow.city_name ==
+                                            weather_database.city_name) \
+            .update({'city_name': weather_database.city_name,
+                     'time_of_day': weather_database.time_of_day,
+                     'temperature': weather_database.temperature,
+                     'description': weather_database.description,
+                     'preciptation': weather_database.preciptation,
+                     'humidity': weather_database.humidity,
+                     'wind': weather_database.wind})
+
+            for week_day in weather_database.forecast_week:
+                db.session.query(Forecast).filter(Forecast.weather_id == weather_database.id,
+                                              Forecast.day == week_day.day).update(
+                {'day': week_day.day,
+                 'description': week_day.description,
+                 'min_temperature': week_day.min_temperature,
+                 'max_temperature': week_day.max_temperature})
+
+            db.session.commit()
+        except Exception:
+            raise Exception
+            print(f"error updating the weather: {Exception}")
+
     @classmethod
     def update_weather_db(cls, weather_data, db):
         weather_db = WeatherNow.query.all()
 
         try:
             if len(weather_data.values()) != 0 and len(weather_db) != 0:
-                if cls.check_date(weather_db[0].time_of_day):
-                    for weather in weather_db:
-                        temp_weather = weather_data[weather.city_name]
-                        db.session.query(WeatherNow).filter(WeatherNow.city_name ==
-                                                            temp_weather.city_name) \
-                            .update({'city_name': temp_weather.city_name,
-                                     'time_of_day': temp_weather.time_of_day,
-                                     'temperature': temp_weather.temperature,
-                                     'description': temp_weather.description,
-                                     'preciptation': temp_weather.preciptation,
-                                     'humidity': temp_weather.humidity,
-                                     'wind': temp_weather.wind})
+                """filter database by date to check if passed 1hr to update weather database ."""
+                checked_date_weather = filter(lambda weather : cls.check_date(weather.time_of_day) , weather_db)
+                """update the filtered ones"""
+                updated_weather = [cls.update_weather(weather, weather_data[weather.city_name] , db ) for weather in checked_date_weather]
 
-                        for week_day in temp_weather.forecast_week:
-                            db.session.query(Forecast).filter(Forecast.weather_id == weather.id,
-                                                              Forecast.day == week_day.day).update(
-                                {'day': week_day.day,
-                                 'description': week_day.description,
-                                 'min_temperature': week_day.min_temperature,
-                                 'max_temperature': week_day.max_temperature})
-
-                        db.session.commit()
-                else:
+                if not updated_weather :
                     print(f"No need to update Weather data !!")
         except Exception:
             raise Exception
@@ -163,13 +175,12 @@ class WeatherUtilities(object):
     def check_date(cls, date_db):
 
         condition = False
-
         try:
             time_db = datetime.strptime(date_db, '%Y-%m-%d %H:%M:%S.%f')
             time_now = datetime.now()
             delta_time = time_now - time_db
             diff_time_hr = delta_time.total_seconds() / 3600
-            print(diff_time_hr)
+            #print(diff_time_hr)
 
             if (diff_time_hr > 1):
                 condition = True
