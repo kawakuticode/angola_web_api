@@ -5,6 +5,7 @@ from application.models.schemas import RadioSchema, WeatherNowSchema
 from application.models.model import db, Radio, WeatherNow, Forecast
 from application.utilities.radio_utilities import RadioUtilities as radio_utilities
 from application.utilities.weather_utilities import WeatherUtilities as weather_utilities
+import logging
 
 URL_WEATHER = "https://www.google.com/search?lr=lang_en&ie=UTF-8&q=weather"
 _URL = "http://radios.sapo.ao"
@@ -19,15 +20,15 @@ wnows_schema = WeatherNowSchema(many=True)
 
 @app.before_first_request
 def before_first_request_func():
-    print("server started : ", datetime.now())
+    logging.info("server started : %s", datetime.now())
     weather_data = weather_utilities.get_weather_now(URL_WEATHER)
     radios_data = radio_utilities.get_radio_data(_URL)
 
     if not radio_utilities.add_radio_db(radios_data, db):
-        print("updating radios.... on start")
+        logging.info("updating radios.... on start")
         radio_utilities.update_radio_db(radios_data, db)
     if not weather_utilities.add_weather_db(weather_data, db):
-        print("updating weather now....on start")
+        logging.info("updating weather now....on start")
         weather_utilities.update_weather_db(weather_data, db)
 
 

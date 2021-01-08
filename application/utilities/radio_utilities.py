@@ -1,6 +1,6 @@
-from datetime import datetime
 from urllib.parse import urljoin
 import requests
+import logging
 from bs4 import BeautifulSoup as Bs
 from requests import HTTPError
 from application.models.model import Radio
@@ -24,9 +24,9 @@ class RadioUtilities(object):
             html = session.get(url)
             soup = Bs(html.text, "html.parser")
         except HTTPError:
-            print(f"get radio soup http_error with code {HTTPError}")
+            logging.debug("radio soup http error with code :%s", HTTPError)
         except ConnectionError:
-            print(f"get radio soup error_connection with code {ConnectionError}")
+            logging.debug("raddio soup connection error with code :%s", ConnectionError)
         finally:
             return soup
 
@@ -39,7 +39,7 @@ class RadioUtilities(object):
                 if name.string is not None:
                     radio_name = name.string
         else:
-            print('error radio name not founded!')
+            logging.info('error radio name not founded!')
         return radio_name
 
     @classmethod
@@ -49,7 +49,7 @@ class RadioUtilities(object):
         if url_ is not None:
             radio_url = url_.get('href')
         else:
-            print('radio url not founded!')
+            logging.info('radio url not founded!')
         return radio_url
 
     @classmethod
@@ -59,7 +59,7 @@ class RadioUtilities(object):
         if src is not None:
             img_logo = src.get('src')
         else:
-            print("src image logo not founded")
+            logging.info("url image logo not founded")
         return img_logo
 
     @classmethod
@@ -75,7 +75,7 @@ class RadioUtilities(object):
             if player is not None:
                 url_stream = player.find('li').find('a').get('href')
         except Exception:
-            print(f"url stream error {Exception}")
+            logging.debug("radio url stream error :%s", Exception)
         finally:
             return url_stream
 
@@ -98,13 +98,13 @@ class RadioUtilities(object):
 
                     data_radio.update({radio_.r_name: radio_})
             else:
-                print(f"radio list not found")
+                logging.info("radio list not found")
         except HTTPError:
-            print(f"get radio_webdata! Http error. code : {HTTPError}")
+            logging.debug("radio webdata Http error. code :%s", HTTPError)
         except ConnectionError:
-            print(f"get radio_webdata! connection error. code : {ConnectionError}")
+            logging.debug("radio webdata connection error. code :%s", ConnectionError)
         except Exception:
-            print(f"Error while creating  radio_webdata! code: {Exception}")
+            logging.debug("main Error while creating  radio_webdata! code:%s", Exception)
         finally:
             return data_radio
 
@@ -118,7 +118,7 @@ class RadioUtilities(object):
                 db.session.commit()
                 status = True
         except Exception:
-            print(f"Error while adding radio_webdata code : {Exception}")
+            logging.debug("Error while adding radio info to database:%s", Exception)
         finally:
             db.session.close()
             return status
@@ -135,8 +135,8 @@ class RadioUtilities(object):
                                 'stream_link': radio_web.stream_link, 'img_logo': radio_web.img_logo})
                 db.session.commit()
             else:
-                print(f"No need to update radios data!!")
+                logging.info("No need to update radios database!!")
         except Exception:
-            print(f"unable to update radio_webdata {Exception}")
+            logging.debug("unable to update radio_webdata:%s", Exception)
         finally:
             db.session.close()

@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
@@ -9,6 +10,7 @@ ma = Marshmallow()
 
 def create_app():
     """Initialize the core application."""
+
     app = Flask(__name__, instance_relative_config=False)
     app.config.from_object('config.ProdConfig')
     register_scheduler(app)
@@ -23,8 +25,3 @@ def create_app():
         db.create_all()
 
     return app
-
-
-
-
-

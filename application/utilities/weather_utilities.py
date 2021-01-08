@@ -1,6 +1,6 @@
 from datetime import datetime
 from datetime import timedelta
-
+import logging
 import requests
 from bs4 import BeautifulSoup as Bs
 from requests import HTTPError
@@ -8,7 +8,7 @@ from requests import HTTPError
 from application.models.weather import WeatherNow, Forecast
 
 ANGOLA_PROVINCES = ['Bengo', 'Benguela', 'Kuito', 'Cabinda', 'Menongue', "N'dalatando", 'Sumbe', 'Ondjiva',
-                    'Huambo', 'Lubango', 'Luanda', 'Dundo', 'Saurimo', 'Malanje', 'Luena', 'Namibe', 'Uíge', 'Zaire']
+                    'Huambo', 'Lubango', 'Luanda', 'Dundo', 'Saurimo', 'Malanje', 'Luena', 'Namibe', 'Uíge']
 
 WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -33,10 +33,11 @@ class WeatherUtilities(object):
         try:
             html = session.get(url)
             soup = Bs(html.text, "html.parser")
-        except HTTPError:
-            print(f"get weather soup error with code {HTTPError}")
-        except ConnectionError:
-            print(f"get weather soup error with code {ConnectionError}")
+        except HTTPError as error:
+            # print(f"get weather soup error with code {HTTPError}")
+            logging.debug("weather soup http error code : %s", error)
+        except ConnectionError as error:
+            logging.debug("weather soup connection error code : %s", error)
         finally:
             return soup
 
@@ -89,11 +90,11 @@ class WeatherUtilities(object):
 
                 data_weather.update({_weather.city_name: _weather})
         except HTTPError:
-            print(f"get weather data Http error. code : {HTTPError}")
+            logging.debug("weather data error code :%s", HTTPError)
         except ConnectionError:
-            print(f"get weather data now connection error. code : {ConnectionError}")
+            logging.debug("weather data connection error code :%s", ConnectionError)
         except Exception as error:
-            print(f"main error getting weather data : {error}")
+            logging.debug("main error getting weather data :%s", error)
         finally:
             return data_weather
 
@@ -107,7 +108,7 @@ class WeatherUtilities(object):
                 db.session.commit()
                 status = True
         except Exception:
-            print(f"error adding the weather to db: {Exception}")
+            logging.debug("error adding the weather to db: %s", Exception)
         finally:
             db.session.close()
             return status
@@ -116,7 +117,6 @@ class WeatherUtilities(object):
 
     @classmethod
     def update_weather(cls,weather_database , db):
-        print(weather_database)
         try:
             db.session.query(WeatherNow).filter(WeatherNow.city_name ==
                                             weather_database.city_name) \
@@ -138,13 +138,11 @@ class WeatherUtilities(object):
 
             db.session.commit()
         except Exception:
-            raise Exception
-            print(f"error updating the weather: {Exception}")
+            logging.debug("error updating a weather data:%s", Exception)
 
     @classmethod
     def update_weather_db(cls, weather_data, db):
         weather_db = WeatherNow.query.all()
-
         try:
             if len(weather_data.values()) != 0 and len(weather_db) != 0:
                 """filter database by date to check if passed 1hr to update weather database ."""
@@ -153,10 +151,9 @@ class WeatherUtilities(object):
                 updated_weather = [cls.update_weather( weather_data[weather.city_name] , db ) for weather in checked_date_weather]
 
                 if not updated_weather :
-                    print(f"No need to update Weather data !!")
+                    logging.info("No need to update Weather database")
         except Exception:
-            raise Exception
-            print(f"error updating the weather: {Exception}")
+            logging.debug("error updating the weather database :%s", Exception)
         finally:
             db.session.close()
 
@@ -180,11 +177,10 @@ class WeatherUtilities(object):
             time_now = datetime.now()
             delta_time = time_now - time_db
             diff_time_hr = delta_time.total_seconds() / 3600
-            #print(diff_time_hr)
 
             if (diff_time_hr > 1):
                 condition = True
         except  Exception:
-            print("Unable to check date")
+            logging.debug("Unable to check date :%s", Exception)
         finally:
             return condition
