@@ -1,8 +1,7 @@
 from marshmallow import fields
 
 from application.application_factory import ma
-from application.models.model import Radio
-from application.models.weather import WeatherNow, Forecast
+from application.models.model import Radio, WeatherNow, Forecast
 
 
 class WeatherNowSchema(ma.SQLAlchemyAutoSchema):

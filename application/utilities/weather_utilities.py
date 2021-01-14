@@ -1,11 +1,12 @@
 from datetime import datetime
 from datetime import timedelta
+from datetime import date
 import logging
 import requests
 from bs4 import BeautifulSoup as Bs
 from requests import HTTPError
 
-from application.models.weather import WeatherNow, Forecast
+from application.models.model import WeatherNow, Forecast
 
 ANGOLA_PROVINCES = ['Bengo', 'Benguela', 'Kuito', 'Cabinda', 'Menongue', "N'dalatando", 'Sumbe', 'Ondjiva',
                     'Huambo', 'Lubango', 'Luanda', 'Dundo', 'Saurimo', 'Malanje', 'Luena', 'Namibe', 'Uíge']
@@ -66,7 +67,7 @@ class WeatherUtilities(object):
                 result['wind'] = soup.find("span", attrs={"id": "wob_ws"}).text
 
                 next_days = []
-
+                date_initial = 0
                 days = soup.find("div", attrs={"id": "wob_dp"})
                 for day in days.findAll("div", attrs={"class": "wob_df"}):
                     # extract the name of the day
@@ -78,8 +79,10 @@ class WeatherUtilities(object):
                     max_temp = temp[0].text
                     # minimum temparature in Celsius, use temp[3].text if you want fahrenheit
                     min_temp = temp[2].text
+                    date = cls.get_next_date(date_initial)
+                    date_initial = date_initial + 1
 
-                    n_day = Forecast(day_name, description, min_temp, max_temp)
+                    n_day = Forecast(day_name, date, description, min_temp, max_temp)
                     next_days.append(n_day)
 
                     result['week_weather'] = next_days
@@ -101,6 +104,7 @@ class WeatherUtilities(object):
     @classmethod
     def add_weather_db(cls, weather_data, db):
         weather_db = WeatherNow.query.all()
+        print(weather_db)
         status = False
         try:
             if (list(weather_data.values()) != 0) and (len(weather_db) == 0):
@@ -131,10 +135,11 @@ class WeatherUtilities(object):
             for week_day in weather_database.forecast_week:
                 db.session.query(Forecast).filter(Forecast.weather_id == weather_database.id,
                                               Forecast.day == week_day.day).update(
-                {'day': week_day.day,
-                 'description': week_day.description,
-                 'min_temperature': week_day.min_temperature,
-                 'max_temperature': week_day.max_temperature})
+                    {'day': week_day.day,
+                     'date': week_day.date,
+                     'description': week_day.description,
+                     'min_temperature': week_day.min_temperature,
+                     'max_temperature': week_day.max_temperature})
 
             db.session.commit()
         except Exception:
@@ -184,3 +189,8 @@ class WeatherUtilities(object):
             logging.debug("Unable to check date :%s", Exception)
         finally:
             return condition
+
+    @classmethod
+    def get_next_date(cls, next_day):
+        next_day = date.today() + timedelta(days=next_day)
+        return next_day

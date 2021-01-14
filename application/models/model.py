@@ -66,21 +66,23 @@ class Forecast(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     weather_id = db.Column(db.Integer, db.ForeignKey('weather_now.id', onupdate='CASCADE', ondelete='CASCADE'),
                            nullable=False)
-    day = db.Column(db.TEXT, index=True, nullable=False)
+    day_of_week = db.Column(db.TEXT, index=True, nullable=False)
+    date = db.Column(db.TEXT, index=True, nullable=False)
     description = db.Column(db.TEXT, index=True, nullable=False)
     min_temperature = db.Column(db.TEXT, index=True, nullable=False)
     max_temperature = db.Column(db.TEXT, index=True, nullable=False)
 
-    def __init__(self, day, description, min_temperature, max_temperature):
-        self.day = day
+    def __init__(self, day_of_week, date, description, min_temperature, max_temperature):
+        self.day_of_week = day_of_week
+        self.date = date
         self.description = description
         self.min_temperature = min_temperature
         self.max_temperature = max_temperature
 
     def __str__(self):
-        return f"(day:{self.day_of_week},description:{self.description}, min_temperature:{self.min_temperature}ºC," \
+        return f"(day:{self.day_of_week},date = {self.date} , description:{self.description}, min_temperature:{self.min_temperature}ºC," \
                f" max_temperature:{self.max_temperature}ºC)"
 
     def __repr__(self):
-        return f"(day:{self.day_of_week},description:{self.description}, min_temperature:{self.min_temperature}ºC," \
+        return f"(day:{self.day_of_week},date = {self.date} ,description:{self.description}, min_temperature:{self.min_temperature}ºC," \
                f" max_temperature:{self.max_temperature}ºC)"
